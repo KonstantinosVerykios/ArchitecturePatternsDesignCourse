@@ -6,9 +6,9 @@ public class AudioManager : MonoBehaviour
     public AudioClip CactusClip;
     public AudioClip BGMusic;
 
-    [Header("AudioSource")]
-    private AudioSource MainSource;
-    private AudioSource SFXSource;
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource BGSource;
+    [SerializeField] private AudioSource SFXSource;
     private float _pitch = 0f;
 
 
@@ -16,18 +16,15 @@ public class AudioManager : MonoBehaviour
 
     public void PlayCactusSound()
     {
-        SFXSource.Stop();
         SFXSource.clip = CactusClip;
         SFXSource.pitch = _pitch * Random.Range(0.98f, 1.02f);
         SFXSource.Play();
     }
 
-    public void StartMusic()
+    public void PlayBackgroundMusic()
     {
-        SFXSource.Stop();
-        SFXSource.clip = CactusClip;
-        SFXSource.pitch = _pitch * Random.Range(0.98f, 1.02f);
-        SFXSource.Play();
+        BGSource.clip = BGMusic;
+        BGSource.Play();
     }
 
     private void Awake()
@@ -48,16 +45,8 @@ public class AudioManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        MainSource = GetComponent<AudioSource>();
-        SFXSource = GetComponent<AudioSource>();
-
         _pitch = SFXSource.pitch;
-        
+        PlayBackgroundMusic();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
