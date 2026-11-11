@@ -3,6 +3,17 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    
+    private enum PlayerState
+    {
+        STANDING,
+        JUMPING,
+        CROUCH
+    }
+
+    [SerializeField]
+    private PlayerState _state; //Current state
+
     public Rigidbody _rb;
 
     [Range(0,5)]
@@ -10,8 +21,6 @@ public class PlayerController : MonoBehaviour
 
     [Range(5, 10)]
     public float jumpForce = 7.0f;
-
-
 
     private ICommand _commandForward; //Command for Wkey
     private ICommand _commandLeft; //Command for Akey
@@ -25,72 +34,113 @@ public class PlayerController : MonoBehaviour
     public ICommand previousStep;
     public ICommand nextStep;
 
+    public MeshRenderer Mesh;
+
     private void HandleInput()
     {
-        if (Keyboard.current.wKey.wasPressedThisFrame)
+
+        switch (_state)
         {
-            _commandForward.Execute();
-            previousStep = _commandForward;
-            nextStep = null;
+            case PlayerState.STANDING:
+                if (Keyboard.current.spaceKey.wasPressedThisFrame)
+                {
+                    _state = PlayerState.JUMPING;
+                    _commandSpace.Execute();
+                    previousStep = _commandSpace;
+                    nextStep = null;
+                }
+
+                if (Keyboard.current.cKey.wasPressedThisFrame)
+                {
+                    _state = PlayerState.CROUCH;
+                    Mesh.material.color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+                }
+                break;
+            case PlayerState.JUMPING:
+                break;
+            case PlayerState.CROUCH:
+                if (Keyboard.current.spaceKey.wasPressedThisFrame)
+                {
+                    _state = PlayerState.STANDING;
+                    nextStep = null;
+                }
+                break;
         }
 
-        if (Keyboard.current.aKey.wasPressedThisFrame)
-        {
-            _commandLeft.Execute();
-            previousStep = _commandLeft;
-            nextStep = null;
-        }
+        //if (Keyboard.current.wKey.wasPressedThisFrame)
+        //{
+        //    _commandForward.Execute();
+        //    previousStep = _commandForward;
+        //    nextStep = null;
+        //}
 
-        if (Keyboard.current.sKey.wasPressedThisFrame)
-        {
-            _commandBack.Execute();
-            previousStep = _commandBack;
-            nextStep = null;
-        }
+        //if (Keyboard.current.aKey.wasPressedThisFrame)
+        //{
+        //    _commandLeft.Execute();
+        //    previousStep = _commandLeft;
+        //    nextStep = null;
+        //}
 
-        if (Keyboard.current.dKey.wasPressedThisFrame)
-        {
-            _commandRight.Execute();
-            previousStep = _commandRight;
-            nextStep = null;
-        }
+        //if (Keyboard.current.sKey.wasPressedThisFrame)
+        //{
+        //    _commandBack.Execute();
+        //    previousStep = _commandBack;
+        //    nextStep = null;
+        //}
 
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            _commandSpace.Execute();
-            previousStep = _commandSpace;
-            nextStep = null;
-        }
+        //if (Keyboard.current.dKey.wasPressedThisFrame)
+        //{
+        //    _commandRight.Execute();
+        //    previousStep = _commandRight;
+        //    nextStep = null;
+        //}
 
-        if (Keyboard.current.rKey.wasPressedThisFrame)
-        {
-            InvertMovement();
-        }
+        //if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        //{
+        //    _commandSpace.Execute();
+        //    previousStep = _commandSpace;
+        //    nextStep = null;
+        //}
 
-        if (Keyboard.current.zKey.wasPressedThisFrame)
-        {
-            if(previousStep != null)
-            {
-                previousStep.Undo();
-                nextStep = previousStep;
-                previousStep = null;
-            }
-        }
+        //if (Keyboard.current.rKey.wasPressedThisFrame)
+        //{
+        //    InvertMovement();
+        //}
 
-        if (Keyboard.current.xKey.wasPressedThisFrame)
-        {
-            if(nextStep != null)
-            {
-                nextStep.Execute();
-                previousStep = nextStep;
-                nextStep = null;
-            }
-        }
+        //if (Keyboard.current.zKey.wasPressedThisFrame)
+        //{
+        //    if(previousStep != null)
+        //    {
+        //        previousStep.Undo();
+        //        nextStep = previousStep;
+        //        previousStep = null;
+        //    }
+        //}
+
+        //if (Keyboard.current.xKey.wasPressedThisFrame)
+        //{
+        //    if(nextStep != null)
+        //    {
+        //        nextStep.Execute();
+        //        previousStep = nextStep;
+        //        nextStep = null;
+        //    }
+        //}
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == "Ground")
+        {
+            _state = PlayerState.STANDING;
+        }
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+
+        _state = PlayerState.STANDING;
+
         _rb = GetComponent<Rigidbody>();
 
         _commandForward =new MoveForwardCommand(transform, moveDistance);
@@ -107,6 +157,8 @@ public class PlayerController : MonoBehaviour
 
         _commandUndo = null;
         _commandRedo = null;
+
+
     }
 
     void InvertMovement()
@@ -121,6 +173,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         //Check and handle input => Move Player
-        HandleInput();
+        if(GameManager.instance.IsPlaying())
+            HandleInput();
     }
 }
