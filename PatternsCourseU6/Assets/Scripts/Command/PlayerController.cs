@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
-{
-    
+{  
     private enum PlayerState
     {
         STANDING,
@@ -38,6 +37,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleInput()
     {
+        if (Keyboard.current == null) return;
 
         switch (_state)
         {
@@ -55,6 +55,59 @@ public class PlayerController : MonoBehaviour
                     _state = PlayerState.CROUCH;
                     Mesh.material.color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
                 }
+
+                if (Keyboard.current.wKey.wasPressedThisFrame)
+                {
+                    _commandForward.Execute();
+                    previousStep = _commandForward;
+                    nextStep = null;
+                }
+
+                if (Keyboard.current.aKey.wasPressedThisFrame)
+                {
+                    _commandLeft.Execute();
+                    previousStep = _commandLeft;
+                    nextStep = null;
+                }
+
+                if (Keyboard.current.sKey.wasPressedThisFrame)
+                {
+                    _commandBack.Execute();
+                    previousStep = _commandBack;
+                    nextStep = null;
+                }
+
+                if (Keyboard.current.dKey.wasPressedThisFrame)
+                {
+                    _commandRight.Execute();
+                    previousStep = _commandRight;
+                    nextStep = null;
+                }
+
+                if (Keyboard.current.rKey.wasPressedThisFrame)
+                {
+                    InvertMovement();
+                }
+
+                if (Keyboard.current.zKey.wasPressedThisFrame)
+                {
+                    if (previousStep != null)
+                    {
+                        previousStep.Undo();
+                        nextStep = previousStep;
+                        previousStep = null;
+                    }
+                }
+
+                if (Keyboard.current.xKey.wasPressedThisFrame)
+                {
+                    if (nextStep != null)
+                    {
+                        nextStep.Execute();
+                        previousStep = nextStep;
+                        nextStep = null;
+                    }
+                }
                 break;
             case PlayerState.JUMPING:
                 break;
@@ -66,66 +119,6 @@ public class PlayerController : MonoBehaviour
                 }
                 break;
         }
-
-        //if (Keyboard.current.wKey.wasPressedThisFrame)
-        //{
-        //    _commandForward.Execute();
-        //    previousStep = _commandForward;
-        //    nextStep = null;
-        //}
-
-        //if (Keyboard.current.aKey.wasPressedThisFrame)
-        //{
-        //    _commandLeft.Execute();
-        //    previousStep = _commandLeft;
-        //    nextStep = null;
-        //}
-
-        //if (Keyboard.current.sKey.wasPressedThisFrame)
-        //{
-        //    _commandBack.Execute();
-        //    previousStep = _commandBack;
-        //    nextStep = null;
-        //}
-
-        //if (Keyboard.current.dKey.wasPressedThisFrame)
-        //{
-        //    _commandRight.Execute();
-        //    previousStep = _commandRight;
-        //    nextStep = null;
-        //}
-
-        //if (Keyboard.current.spaceKey.wasPressedThisFrame)
-        //{
-        //    _commandSpace.Execute();
-        //    previousStep = _commandSpace;
-        //    nextStep = null;
-        //}
-
-        //if (Keyboard.current.rKey.wasPressedThisFrame)
-        //{
-        //    InvertMovement();
-        //}
-
-        //if (Keyboard.current.zKey.wasPressedThisFrame)
-        //{
-        //    if(previousStep != null)
-        //    {
-        //        previousStep.Undo();
-        //        nextStep = previousStep;
-        //        previousStep = null;
-        //    }
-        //}
-
-        //if (Keyboard.current.xKey.wasPressedThisFrame)
-        //{
-        //    if(nextStep != null)
-        //    {
-        //        nextStep.Execute();
-        //        previousStep = nextStep;
-        //        nextStep = null;
-        //    }
-        //}
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -172,8 +165,23 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Check and handle input => Move Player
-        if(GameManager.instance.IsPlaying())
-            HandleInput();
+        if (GameManager.instance == null)
+        {
+            Debug.LogError("1. GameManager.instance is NULL");
+            return;
+        }
+
+        if (Keyboard.current == null)
+        {
+            Debug.LogError("3. Keyboard.current is NULL (New Input System not active or Game window unfocused)");
+            return;
+        }
+
+        if (Keyboard.current.anyKey.wasPressedThisFrame)
+        {
+            Debug.Log("4. Key pressed! State is: " + _state);
+        }
+
+        HandleInput();
     }
 }

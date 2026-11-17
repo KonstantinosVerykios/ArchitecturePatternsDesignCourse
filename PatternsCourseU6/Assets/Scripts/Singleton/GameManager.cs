@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    enum GameState
+    public enum GameState
     {
         MAIN_MENU,
         PLAYING,
@@ -12,71 +12,76 @@ public class GameManager : MonoBehaviour
         GAME_OVER
     }
 
-    [SerializeField]
     private static GameState _state;
-    
     private int Highscore = 0;
 
     public static GameManager instance { get; private set; }
 
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            // Automatically set state based on which scene you hit Play in
+            if (SceneManager.GetActiveScene().name == "GameScene")
+            {
+                _state = GameState.PLAYING;
+            }
+            else
+            {
+                _state = GameState.MAIN_MENU;
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
     public static void StartGame()
     {
-        // Set the game state
         _state = GameState.PLAYING;
-
+        Time.timeScale = 1f;
         Debug.Log("User entered!");
-        // Open the singleton game scene
         SceneManager.LoadScene("GameScene");
     }
 
     public static void ExitGame()
     {
         Debug.Log("User quit!");
-        // Exit the game scene
         Application.Quit();
     }
 
-    private void Awake()
+    private void Update()
     {
-        // Allows for only one instance of a game maager to exist at a time
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(this);
-        }
-        else
-        {
-            Destroy(this);
-            return;
-        }
-    }
+        if (Keyboard.current == null) return;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        _state = GameState.MAIN_MENU;   
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
         switch (_state)
         {
             case GameState.PLAYING:
-                if(Keyboard.current.escapeKey.wasPressedThisFrame)
+                if (Keyboard.current.escapeKey.wasPressedThisFrame)
                 {
                     _state = GameState.PAUSED;
                     Time.timeScale = 0f;
                 }
                 break;
+
             case GameState.PAUSED:
                 if (Keyboard.current.escapeKey.wasPressedThisFrame)
                 {
                     _state = GameState.PLAYING;
                     Time.timeScale = 1f;
                 }
-                break;
 
+                if (Keyboard.current.qKey.wasPressedThisFrame)
+                {
+                    _state = GameState.MAIN_MENU;
+                    SceneManager.LoadScene("MenuScene");
+                    ExitGame();
+                }
+                break;
         }
     }
 
